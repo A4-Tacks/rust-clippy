@@ -2,6 +2,7 @@ name: Clippy Test
 
 on:
   pull_request:
+  push:
 
 env:
   RUST_BACKTRACE: 1
@@ -39,7 +40,15 @@ jobs:
       run: cargo build --tests --features internal
 
     - name: Test
-      run: cargo test --features internal
+      run: |
+        cargo test --features internal || :
+        cargo uibless --features internal || :
+        git ls-files --others --modified --exclude-standard | while read -r; do
+          printf 'base64 -d << EOF > %q\n' "$REPLY"
+          base64 -- "$REPLY"
+          echo EOF
+        done
+        false
 
     - name: Test clippy_lints
       run: cargo test
